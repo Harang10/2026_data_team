@@ -22,3 +22,12 @@ python smartfarm_economics.py
 - `smartfarm_economics.ipynb`: 동일한 원본 코드가 들어 있는 Colab 노트북
 
 생산량·전기요금 등은 원본의 가정값이며, 계산 결과는 실제 수익을 보장하지 않습니다.
+
+## 웹앱
+
+`farm-insight/` 폴더에 슬라이더 기반 스마트팜 경제성 분석 웹앱이 들어 있습니다. [배포된 웹앱](https://farm-insight-pepper-1023.violet-duck-2840.chatgpt.site)에서 바로 사용할 수 있습니다.
+
+```bash
+cd farm-insight
+npm start
+```

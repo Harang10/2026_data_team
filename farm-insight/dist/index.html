@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f6f2">
+  <meta name="description" content="고추 스마트팜의 투자비, 운영비, 수익과 회수 기간을 슬라이더로 직접 비교하는 경제성 시뮬레이터.">
+  <title>팜인사이트 — 스마트팜 경제성 분석</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">분석 결과로 건너뛰기</a>
+  <header class="site-header">
+    <a class="brand" href="./" aria-label="팜인사이트 홈"><span class="brand-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 26V15M16 20C5 20 5 9 5 9s12-1 11 11ZM16 15C16 4 27 5 27 5s1 11-11 10Z"/></svg></span><span>farm<span class="brand-colon">:</span>insight</span></a>
+    <nav class="main-nav" aria-label="주 메뉴"><button class="nav-link active" data-view="dashboard" aria-current="page">경제성 분석</button><button class="nav-link" data-view="scenarios">시나리오 비교</button><button class="nav-link" data-view="method">계산 기준</button></nav>
+    <button class="button export-button" id="export-button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-4-4 4 4 4-4M5 16v4h14v-4"/></svg><span>결과 내보내기</span></button>
+  </header>
+  <div class="page-shell">
+    <section class="page-heading">
+      <div><div class="eyebrow"><span class="tiny-dot"></span> A BETTER START FOR YOUR FARM</div><h1>스마트팜의 가능성을 계산하세요<span class="heading-dot">.</span></h1><p>농장의 규모부터 수익까지. 숫자로 그려보는 나의 첫 스마트팜.</p></div>
+      <div class="heading-illustration" aria-hidden="true"><svg viewBox="0 0 220 100"><ellipse cx="117" cy="86" rx="89" ry="8" fill="#e7ece0"/><path d="m32 48 66-36 85 24v46l-66 13-85-24Z" fill="#edf3e3"/><path d="m32 48 48-31 37 42v36L32 71Z" fill="#e0eacd"/><path d="m117 59 66-23v46l-66 13Z" fill="#f6f9ee"/><g fill="none" stroke="#9cac8d" stroke-width="1.4" stroke-linejoin="round"><path d="m32 48 48-31 37 42 66-23-37-31-66 12m37 42v36l66-13V36M32 48v23l85 24M55 34l41 41v14M105 13l36 38v39M127 8l36 35v43M117 76l66-20M32 58l85 27"/><path d="M65 79V57l18 7v20"/></g><g fill="#77955b"><path d="M138 76c-9-1-10-9-10-9s10-1 10 9M138 75c0-9 8-11 8-11s3 9-8 11M160 69c-8-2-9-9-9-9s9 0 9 9M160 69c1-9 8-10 8-10s2 8-8 10"/></g><g stroke="#587844" stroke-width="1.3"><path d="M138 72v11m22-17v12"/></g><circle cx="190" cy="16" r="8" fill="#d9eaa8"/><path d="M18 70v13m-4-7 4 3 5-8" fill="none" stroke="#91a87b" stroke-width="2"/></svg></div>
+    </section>
+
+    <div class="workspace" id="workspace">
+      <aside class="controls-panel" aria-label="농장 변수 설정">
+        <div class="controls-heading"><div><span class="section-eyebrow">YOUR FARM</span><h2>내 농장 설정</h2></div><button class="icon-button reset-button" id="reset-button" title="기본값으로 초기화" aria-label="모든 변수를 기본값으로 초기화"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10a9 9 0 1 1 1 8M3 4v6h6"/></svg></button></div>
+        <div class="crop-selector"><span class="pepper-icon" aria-hidden="true">🌶️</span><div><strong>고추</strong><span>시설 재배 · 기본 모델</span></div><span class="crop-tag">선택 작물</span></div>
+        <div class="controls-body" id="controls-body"></div>
+        <div class="controls-footer"><span class="live-dot"></span><span id="save-status">변경사항이 자동으로 저장돼요</span></div>
+      </aside>
+
+      <main id="main" tabindex="-1">
+        <section id="dashboard-view" class="view active" aria-label="경제성 분석 대시보드">
+          <div class="result-heading"><h2>분석 대시보드 <span class="live-label"><i></i> LIVE</span></h2><span id="cycle-description">연 2회 재배 기준</span></div>
+          <section class="verdict-card" id="verdict-card" aria-live="polite" aria-atomic="true"></section>
+          <div class="metric-grid" id="metric-grid"></div>
+          <section class="card chart-card">
+            <div class="card-heading"><div><h3>시간이 지날수록, 쌓이는 수익</h3><p>초기 투자금을 차감한 누적 현금흐름</p></div><div class="segmented" aria-label="차트 분석 기간"><button class="active" data-horizon="10" aria-pressed="true">10년</button><button data-horizon="20" aria-pressed="false">20년</button><button data-horizon="30" aria-pressed="false">30년</button></div></div>
+            <div class="chart-legend"><span><i class="legend-line"></i> 누적 현금흐름</span><span><i class="legend-dash"></i> 목표 회수 시점</span><span class="chart-unit">단위: 만원</span></div>
+            <div id="cashflow-chart" class="cashflow-chart"></div>
+            <div class="chart-footer" id="chart-footer"></div>
+          </section>
+          <div class="lower-grid">
+            <section class="card cost-card"><div class="card-heading"><div><h3>어디에 얼마나 쓰일까요?</h3><p>재배 1회 운영비 구성</p></div><span class="mini-icon">₩</span></div><div id="cost-breakdown"></div></section>
+            <section class="card breakeven-card"><div class="card-heading"><div><h3>수익의 기준선</h3><p>현재 생산량 기준 · 판매 단가</p></div><span class="mini-icon">↗</span></div><div id="breakeven-content"></div></section>
+          </div>
+          <section class="insight-strip"><span class="insight-icon" aria-hidden="true">↗</span><div><strong>가격과 생산량이 달라지면 어떨까요?</strong><p>보수적·기준·낙관적 시나리오로 투자 여유를 확인해보세요.</p></div><button class="text-button" data-view="scenarios">시나리오 비교 <span aria-hidden="true">→</span></button></section>
+          <p class="model-note"><span aria-hidden="true">ⓘ</span> 입력한 가정에 따른 단순 추정치입니다. 대출이자·세금·감가상각·시설 교체비·토지비는 별도이며, 수익을 보장하지 않습니다. <button data-view="method">계산 기준 보기</button></p>
+        </section>
+
+        <section id="scenarios-view" class="view" hidden aria-label="시나리오 비교">
+          <div class="result-heading"><h2>변화에도, 준비된 농장</h2><span>동일한 투자비·운영비 기준</span></div>
+          <div class="scenario-intro"><span class="section-eyebrow">WHAT IF?</span><h3>조금 덜 수확하고, 조금 덜 받는다면.</h3><p>판매 가격과 생산량이 함께 바뀔 때 회수 기간이 얼마나 달라지는지 확인하세요.</p><div id="scenario-slider"></div></div>
+          <div class="scenario-grid" id="scenario-grid"></div>
+          <section class="card sensitivity-card"><div class="card-heading"><div><h3>가격 × 생산량 민감도</h3><p>각 조합의 예상 투자금 회수 기간</p></div><span class="badge">초록 = 목표 충족</span></div><div id="sensitivity-table"></div></section>
+          <div class="scenario-footnote"><strong>비교 방법</strong><p>보수적 시나리오는 판매 단가와 ㎡당 생산량을 각각 낮추고, 낙관적 시나리오는 각각 높입니다. 수확량에 따른 인건비·포장·운송비의 변화는 반영하지 않으므로, 필요하면 왼쪽 운영비도 조정하세요.</p></div>
+          <button class="button back-button" data-view="dashboard">← 분석 대시보드로 돌아가기</button>
+        </section>
+
+        <section id="method-view" class="view" hidden aria-label="계산 기준">
+          <div class="result-heading"><h2>계산은 투명하게, 판단은 신중하게.</h2></div>
+          <section class="card method-intro"><span class="section-eyebrow">BEHIND THE NUMBERS</span><h3>제공해주신 파이썬 모델을 바탕으로 계산해요.</h3><p>모든 기본값은 분석을 시작하기 위한 예시입니다. 실제 견적, 예상 생산량과 판매 계약 단가로 바꿔보세요. 전기요금도 실제 요금표에 연동되지 않은 가정값입니다.</p></section>
+          <section class="card method-card"><h3>핵심 계산식</h3><dl><div><dt>초기 투자금</dt><dd>재배 면적 ÷ 1,000 × 1,000㎡당 설치비</dd></div><div><dt>재배 1회 매출</dt><dd>면적 × ㎡당 생산량 × 판매 단가</dd></div><div><dt>재배 1회 운영이익</dt><dd>매출 − 종자·인건비·전기·비료·농약·기타 비용</dd></div><div><dt>연간 재배 횟수</dt><dd>12 ÷ (재배 개월 + 재배 사이 휴지 개월)</dd></div><div><dt>연간 운영이익</dt><dd>재배 1회 운영이익 × 연간 재배 횟수</dd></div><div><dt>단순 투자금 회수 기간</dt><dd>초기 투자금 ÷ 연간 운영이익<br><small>운영이익이 0 이하이면 회수 불가로 표시합니다. 초기 투자금이 0이면 회수 기간은 0년입니다.</small></dd></div><div><dt>운영 손익분기 단가</dt><dd>재배 1회 운영비 ÷ 재배 1회 생산량</dd></div><div><dt>목표 회수에 필요한 단가</dt><dd>(재배 1회 운영비 + 초기 투자금 ÷ 목표 연수 ÷ 연간 재배 횟수) ÷ 생산량</dd></div></dl></section>
+          <section class="card method-card"><h3>운영비는 이렇게 합산해요</h3><dl><div><dt>종자</dt><dd>필요 식재 수 = 올림(면적 ÷ 포기당 면적)<br>종자 수 = 올림(필요 식재 수 ÷ 발아율)<br>종자 비용 = 종자 수 × 종자 가격</dd></div><div><dt>인건비</dt><dd>하루 노동시간 × 월 근무일 × 시급 × 재배 개월<br><small>노동시간은 모든 작업자의 합산 시간입니다.</small></dd></div><div><dt>전기</dt><dd>(계약전력 × 기본요금 + 월 사용량 × 사용요금) × (1 + 가산율) × 재배 개월</dd></div><div><dt>비료</dt><dd>올림(밑거름 포 수 × 면적 ÷ 1,000) × 포당 가격<br>+ 올림(웃거름 포 수 × 면적 ÷ 1,000) × 포당 가격</dd></div><div><dt>농약</dt><dd>올림(1,000㎡당 사용량 × 면적 ÷ 1,000) × 방제 횟수 × 단가</dd></div></dl></section>
+          <section class="method-caveat"><h3>설치 결정 전, 함께 확인하세요</h3><p>이 모델은 매년 같은 수익과 재배 주기가 유지되는 단순 회수 모형입니다. 차트는 연간 수익을 균등하게 나눈 추정 흐름이며, 실제 수확·판매 대금 수령 시점과 다릅니다. 휴지기에는 운영비가 발생하지 않는다고 가정합니다.</p><p>대출이자, 세금, 감가상각, 시설 수명·교체·수선, 토지 구입·임차, 보조금, 물가 변화, 판로와 작황 위험은 자동 반영하지 않습니다. 확인된 반복 지출은 기타 비용에 입력하고, 실제 설치 결정은 별도 검토가 필요합니다.</p></section>
+          <button class="button back-button" data-view="dashboard">← 분석 대시보드로 돌아가기</button>
+        </section>
+      </main>
+    </div>
+    <footer class="site-footer"><span>farm:insight <span class="footer-divider">/</span> 좋은 시작을 위한, 작은 계산.</span><span>고추 스마트팜 경제성 시뮬레이터</span></footer>
+  </div>
+  <div id="toast" class="toast" role="status"></div>
+</body>
+</html>
