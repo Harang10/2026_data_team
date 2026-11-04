@@ -164,7 +164,7 @@ export function openWizard(root,{values,answers={},preview,onFinish,onSkip}){
     else if(b.dataset.act==='back'){if(index>=visible().length){index=visible().length-1;draw();}else back();}
     else if(b.dataset.act==='next'){if(!b.disabled)next();}
     else if(b.dataset.act==='finish'){close();onFinish(draft,picked);}
-    else if(b.dataset.pick!==undefined){const q=current();apply(q,Number(b.dataset.pick));draw();setTimeout(()=>{if(current()===q)next();},220);}
+    else if(b.dataset.pick!==undefined){const q=current();apply(q,Number(b.dataset.pick));draw();root.querySelector(`[data-pick="${b.dataset.pick}"]`)?.focus();}
     else if(b.dataset.chip!==undefined){const q=current();draft[q.field.key]=Number(b.dataset.chip);draw();}
   }
   function onInput(e){
