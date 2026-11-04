@@ -12,13 +12,13 @@ export const groups = [
     ['salePrice','건고추 판매 단가',15167,0,50000,1,'원/kg','0원','50,000원','서안동농협 산지가 2025.9 기준(9,100원/600g). 생산량과 같은 건고추 기준으로 입력하세요.'],
   ]},
   {title:'인건비',fields:[
-    ['dailyHours','하루 총 노동시간',4,0,48,.5,'시간','0시간','48시간','전체 작업자의 노동시간을 합산해 주세요.'],
+    ['dailyHours','1,000㎡당 하루 노동시간',4,0,48,.5,'시간','0시간','48시간','작업자 시간을 모두 더한 값을 1,000㎡ 기준으로 넣으면 면적에 맞춰 늘어납니다.'],
     ['workdays','월 근무일수',25,0,31,1,'일','0일','31일'],
     ['hourlyWage','시간당 임금',11000,0,50000,100,'원','0원','50,000원','참고: 2024 노지고추 노동비(자가노동 포함)는 1,000㎡당 약 327만원입니다.'],
   ]},
   {title:'전기요금',fields:[
-    ['contractKw','계약전력',10,0,200,1,'kW','0kW','200kW'],
-    ['monthlyKwh','월 전력 사용량',2000,0,50000,100,'kWh','0kWh','50,000kWh','스마트팜 전력 사용량 실측 자료가 없어 원본 가정값을 유지했습니다.'],
+    ['contractKw','1,000㎡당 설비 계약전력',10,0,200,1,'kW','0kW','200kW','면적에 맞춰 늘어나고, 건조기 소비전력은 따로 더합니다.'],
+    ['monthlyKwh','1,000㎡당 월 전력 사용량',2000,0,50000,100,'kWh','0kWh','50,000kWh','재배하는 달에만 씁니다. 스마트팜 실측 자료가 없어 원본 가정값을 유지했습니다.'],
     ['baseRate','kW당 월 기본요금',1150,0,10000,10,'원','0원','10,000원','한전 농사용(을) 저압, 2025.4.1 적용'],
     ['energyRate','kWh당 사용요금',65.9,0,500,.1,'원','0원','500원','한전 농사용(을) 저압, 2025.4.1 적용'],
     ['electricitySurcharge','전기요금 추가 요금률',14,0,50,1,'%','0%','50%','기후환경·연료비조정요금·부가세·전력기반기금 합계. 단가 미확인으로 원본의 14% 가정을 유지했습니다.'],
@@ -107,9 +107,15 @@ export function calculate(input) {
   const seedCount=Math.ceil(plantCount/(s.germination/100));
   const seedPacks=Math.ceil(seedCount/s.seedPackSize);
   const seed=s.seedlingPrice>0?plantCount*s.seedlingPrice:seedPacks*s.seedPackPrice;
-  const labor=s.dailyHours*s.workdays*s.hourlyWage*s.months;
+  const scale=s.area/1000;
+  const labor=s.dailyHours*scale*s.workdays*s.hourlyWage*s.months;
   const rateFactor=1+s.electricitySurcharge/100;
-  const electricity=(s.contractKw*s.baseRate+s.monthlyKwh*s.energyRate)*rateFactor*s.months;
+  // 계약전력 = 면적에 비례하는 설비 + 건조기. 기본요금은 쉬는 달에도 12개월 내고, 사용요금은 재배하는 달에만 낸다.
+  const contractTotal=s.contractKw*scale+s.dryerKw;
+  const cyclesPerYear=12/(s.months+s.fallowMonths);
+  const baseFee=contractTotal*s.baseRate*12*rateFactor/cyclesPerYear;
+  const energyFee=s.monthlyKwh*scale*s.energyRate*rateFactor*s.months;
+  const electricity=baseFee+energyFee;
   const totalYield=s.area/1000*s.yieldPer1000;
   const freshYield=totalYield/(s.dryRatio/100);
   const dryingBatches=totalYield>0?Math.ceil(freshYield/s.dryerCapacity):0;
@@ -118,7 +124,6 @@ export function calculate(input) {
   const fertilizer=Math.ceil(s.baseBags*s.area/1000)*s.basePrice+Math.ceil(s.topBags*s.area/1000)*s.topPrice;
   const compost=Math.ceil(s.compostBags*s.area/1000)*s.compostPrice;
   const pesticide=Math.ceil(s.pesticideUnits*s.area/1000)*s.sprayCount*s.pesticidePrice;
-  const cyclesPerYear=12/(s.months+s.fallowMonths);
   // 임차료는 연 단위로 나가므로 재배 1회 비용에는 연간 임차료 ÷ 연간 재배 횟수로 나눠 넣는다.
   const land=s.landRent/cyclesPerYear;
   const costs={labor,electricity,drying,seed,fertilizer,compost,pesticide,land,other:s.otherCost};
@@ -130,7 +135,7 @@ export function calculate(input) {
   const met=annualProfit>0&&payback!==null&&payback<=s.targetYears;
   const breakeven=totalYield>0?totalCost/totalYield:null;
   const targetPrice=totalYield>0?(totalCost+investment/s.targetYears/cyclesPerYear)/totalYield:null;
-  return {investment,facility,plantCount,seedCount,seedPacks,freshYield,dryingBatches,dryingKwh,costs,totalCost,totalYield,revenue,profit,cyclesPerYear,annualProfit,payback,met,breakeven,targetPrice};
+  return {contractTotal,baseFee,energyFee,investment,facility,plantCount,seedCount,seedPacks,freshYield,dryingBatches,dryingKwh,costs,totalCost,totalYield,revenue,profit,cyclesPerYear,annualProfit,payback,met,breakeven,targetPrice};
 }
 // Scenarios may exceed slider bounds; apply changes to outputs so the stated percentages remain exact.
 export function scenario(input,priceFactor,yieldFactor) {

@@ -92,9 +92,9 @@ export const questions = [
       {label:'많이 · 16~20회',desc:'농가 6.8%',values:{sprayCount:18,pesticidePrice:24800,pesticideUnits:1}},
     ],
     note:'1회 비용 24,800원은 임시값(2024 노지고추 농약비 ÷ 13회)이에요. 지역농협 가격 조사 후 바뀌어요.'},
-  {id:'labor',tag:'direct',type:'multi',title:'일손은 얼마나\n들어가나요?',sub:'함께 일하는 사람의 시간을 모두 더해 주세요.',
+  {id:'labor',tag:'direct',type:'multi',title:'일손은 얼마나\n들어가나요?',sub:'함께 일하는 사람의 시간을 모두 더해, 1,000㎡(약 300평) 기준으로 넣어 주세요. 면적에 맞춰 계산해요.',
     fields:[
-      {key:'dailyHours',label:'하루 총 노동시간',unit:'시간',min:0,max:48,step:.5},
+      {key:'dailyHours',label:'1,000㎡당 하루 노동시간',unit:'시간',min:0,max:48,step:.5},
       {key:'workdays',label:'한 달 근무일',unit:'일',min:0,max:31,step:1},
       {key:'hourlyWage',label:'시간당 임금',unit:'원',min:0,max:50000,step:100},
     ],
@@ -149,7 +149,7 @@ export function openWizard(root,{values,answers={},preview,onFinish,onSkip}){
     shell(`<div class="wz-q"><span class="wz-tag"><i style="background:${tag.color}"></i>${tag.label}</span><h2 id="wz-title" tabindex="-1">${esc(q.title).replace(/\n/g,'<br>')}</h2><p class="wz-sub">${esc(q.sub)}</p>${body}${q.note?`<p class="wz-note">${esc(q.note)}</p>`:''}</div><div class="wz-cta"><button class="wz-primary" data-act="next" ${canNext(q)?'':'disabled'}>${index===list.length-1?'결과 보기':'다음'}</button></div>`,{progress:(index+1)/(list.length+1)});
     if(q.type==='multi')updateLabor();
   }
-  function updateLabor(){const el=root.querySelector('#wz-extra');if(!el)return;const total=draft.dailyHours*draft.workdays*draft.hourlyWage*draft.months;el.textContent=`재배 ${fmt(draft.months,.5)}개월 동안 인건비 약 ${fmt(Math.round(total/10000))}만원`;}
+  function updateLabor(){const el=root.querySelector('#wz-extra');if(!el)return;const total=draft.dailyHours*draft.area/1000*draft.workdays*draft.hourlyWage*draft.months;el.textContent=`재배 ${fmt(draft.months,.5)}개월 동안 인건비 약 ${fmt(Math.round(total/10000))}만원`;}
   function drawResult(){
     const r=preview(draft),man=n=>`${fmt(Math.round(n/10000))}만원`;
     const ok=r.met,loss=r.annualProfit<=0;

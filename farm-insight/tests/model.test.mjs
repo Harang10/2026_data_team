@@ -17,7 +17,7 @@ test('research defaults reproduce the report worked examples',()=>{const r=calcu
   assert.equal(r.investment,122400000);assert.equal(r.cyclesPerYear,1);});
 test('germination at the legal minimum buys four seed packs',()=>{assert.equal(calculate({...defaults,germination:65}).seedPacks,4);});
 test('loss and zero yield do not produce invalid payback or prices',()=>{const r=calculate({...defaults,salePrice:0,yieldPer1000:0});assert.equal(r.payback,null);assert.equal(r.breakeven,null);assert.equal(r.targetPrice,null);assert.equal(r.met,false);assert.equal(r.costs.drying,0);});
-test('fallow time changes annualization without changing crop costs',()=>{const base=calculate(legacy),r=calculate({...legacy,fallowMonths:6});assert.equal(r.totalCost,base.totalCost);assert.equal(r.annualProfit,base.annualProfit/2);assert.equal(r.payback,base.payback*2);assert.equal(r.met,false);});
+test('fallow time halves crops but the yearly base fee stays',()=>{const base=calculate(legacy),r=calculate({...legacy,fallowMonths:6});close(r.totalCost-r.baseFee,base.totalCost-base.baseFee);close(r.baseFee*r.cyclesPerYear,base.baseFee*base.cyclesPerYear);close(r.annualProfit,(base.annualProfit+base.baseFee*2)/2-base.baseFee*2);assert.equal(r.met,false);});
 test('exact target price recovers the investment on time',()=>{const r=calculate(legacy);const adjusted=calculate({...legacy,salePrice:r.targetPrice});close(adjusted.payback,legacy.targetYears,1e-9);});
 test('bag calculations round up at each required step',()=>{const r=calculate({...defaults,area:1001});assert.equal(r.costs.fertilizer,ceil(4.5*1.001)*18500+ceil(1.001)*17250);assert.equal(r.costs.pesticide,2*13*24800);});
 const ceil=Math.ceil;
@@ -32,3 +32,5 @@ test('seedlings replace seed packs and land rent is charged once a year',()=>{co
   const base=calculate(defaults),rent=calculate({...defaults,landRent:1000000});close(rent.annualProfit,base.annualProfit-1000000);
   const rot=calculate({...defaults,landRent:1000000,fallowMonths:42});close(rot.annualProfit,calculate({...defaults,fallowMonths:42}).annualProfit-1000000);
   const legacyRent=calculate({...legacy,landRent:2000000}),target=calculate({...legacy,landRent:2000000,salePrice:legacyRent.targetPrice});close(target.payback,legacy.targetYears,1e-9);});
+test('labor and facility power grow with area; the dryer adds to contract power',()=>{const a=calculate(defaults),b=calculate({...defaults,area:3000});close(b.costs.labor,a.costs.labor*3);close(b.energyFee,a.energyFee*3);assert.equal(a.contractTotal,10+8.5);assert.equal(b.contractTotal,30+8.5);});
+test('base fee is paid for all 12 months, even in rotation years',()=>{const r=calculate(defaults);close(r.baseFee,18.5*1150*12*1.14);const rot=calculate({...defaults,fallowMonths:42});close(rot.baseFee*rot.cyclesPerYear,18.5*1150*12*1.14);});
