@@ -37,9 +37,9 @@ export const groups = [
     ['germination','종자 발아율',95,10,100,1,'%','10%','100%','기본 95%(소은희 외 2014 저장 시험 근거). 법정 최저 기준은 65%입니다.'],
   ]},
   {title:'비료 · 퇴비',fields:[
-    ['baseBags','1,000㎡당 밑거름',4.5,0,50,.5,'포','0포','50포','뿌리조은(12-7-9) 20kg 기준 90kg = 4.5포'],
+    ['baseBags','1,000㎡당 밑거름',4.5,0,50,.1,'포','0포','50포','뿌리조은(12-7-9) 20kg 기준 90kg = 4.5포'],
     ['basePrice','밑거름 1포 가격',18500,0,100000,500,'원','0원','100,000원','보조 후 가격'],
-    ['topBags','1,000㎡당 웃거름',1,0,50,.5,'포','0포','50포','요소(질소 46%) 20kg 기준. 질소 8.8kg ÷ 0.46 ≈ 19kg'],
+    ['topBags','1,000㎡당 웃거름',1,0,50,.1,'포','0포','50포','요소(질소 46%) 20kg 기준. 질소 8.8kg ÷ 0.46 ≈ 19kg'],
     ['topPrice','웃거름 1포 가격',17250,0,100000,250,'원','0원','100,000원','보조 후 가격(2026.10.20~)'],
     ['compostBags','1,000㎡당 퇴비',100,0,300,5,'포','0포','300포','권장 2,000kg ÷ 20kg포'],
     ['compostPrice','퇴비 1포 가격',0,0,30000,100,'원','0원','30,000원','안동 지역농협 가격 조사 중이라 0원으로 두었습니다.'],
@@ -50,7 +50,7 @@ export const groups = [
     ['pesticidePrice','1회 농약 비용',24800,0,100000,100,'원','0원','100,000원','임시값: 2024 노지고추 농약비 1,000㎡당 32.2만원 ÷ 13회. 지역농협 가격 조사 후 수정하세요.'],
   ]},
   {title:'휴지 기간 · 기타 비용',fields:[
-    ['fallowMonths','재배 사이 휴지 기간',6,0,12,.5,'개월','0개월','12개월','재배 6개월 + 휴지 6개월 = 연 1작. 풋마름병 발생 밭은 3~4년 돌려짓기가 권장됩니다.'],
+    ['fallowMonths','재배 사이 휴지 기간',6,0,48,.5,'개월','0개월','48개월','재배 6개월 + 휴지 6개월 = 연 1작. 풋마름병 발생 밭은 3~4년 돌려짓기가 권장됩니다.'],
     ['otherCost','재배 1회 기타 비용',0,0,50000000,100000,'원','0원','5,000만원','수도·포장·운송·임차료 등 별도 지출을 더하세요.'],
   ]},
 ];
@@ -116,7 +116,7 @@ export function calculate(input) {
   const fertilizer=Math.ceil(s.baseBags*s.area/1000)*s.basePrice+Math.ceil(s.topBags*s.area/1000)*s.topPrice;
   const compost=Math.ceil(s.compostBags*s.area/1000)*s.compostPrice;
   const pesticide=Math.ceil(s.pesticideUnits*s.area/1000)*s.sprayCount*s.pesticidePrice;
-  const costs={labor,electricity,drying,seed,fertilizer:fertilizer+compost,pesticide,other:s.otherCost};
+  const costs={labor,electricity,drying,seed,fertilizer,compost,pesticide,other:s.otherCost};
   const totalCost=Object.values(costs).reduce((a,b)=>a+b,0);
   const revenue=totalYield*s.salePrice;
   const profit=revenue-totalCost;

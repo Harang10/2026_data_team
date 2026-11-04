@@ -13,7 +13,7 @@ test('research defaults reproduce the report worked examples',()=>{const r=calcu
   assert.equal(r.plantCount,2778);assert.equal(r.seedCount,2925);assert.equal(r.seedPacks,3);assert.equal(r.costs.seed,360000);
   assert.equal(r.totalYield,239);assert.equal(r.revenue,239*15167);close(r.freshYield,239/.181);
   assert.equal(r.dryingBatches,7);assert.equal(r.dryingKwh,7*8.5*48);close(r.costs.drying,7*8.5*48*65.9*1.14);
-  assert.equal(r.costs.fertilizer,5*18500+1*17250);assert.equal(r.costs.pesticide,13*24800);
+  assert.equal(r.costs.fertilizer,5*18500+1*17250);assert.equal(r.costs.compost,0);assert.equal(r.costs.pesticide,13*24800);
   assert.equal(r.investment,122400000);assert.equal(r.cyclesPerYear,1);});
 test('germination at the legal minimum buys four seed packs',()=>{assert.equal(calculate({...defaults,germination:65}).seedPacks,4);});
 test('loss and zero yield do not produce invalid payback or prices',()=>{const r=calculate({...defaults,salePrice:0,yieldPer1000:0});assert.equal(r.payback,null);assert.equal(r.breakeven,null);assert.equal(r.targetPrice,null);assert.equal(r.met,false);assert.equal(r.costs.drying,0);});
@@ -25,3 +25,6 @@ test('zero investment is handled separately, including operating losses',()=>{co
 test('saved inputs reject invalid numbers and clamp supported ranges',()=>{const s=sanitize({area:-1,months:0,germination:0,salePrice:Infinity,targetYears:'bad',dryerCapacity:0});assert.equal(s.area,100);assert.equal(s.months,1);assert.equal(s.germination,10);assert.equal(s.salePrice,15167);assert.equal(s.targetYears,5);assert.equal(s.dryerCapacity,10);});
 test('scenario changes compound and keep operating costs constant',()=>{const base=calculate(legacy),low=scenario(legacy,.8,.8);close(low.revenue,base.revenue*.64,.001);assert.equal(low.totalCost,base.totalCost);assert.ok(low.payback>base.payback);});
 test('every preset references real fields within range and defaults match a preset',()=>{for(const preset of presets){for(const option of preset.options){const s=sanitize({...defaults,...option.values});for(const [key,value] of Object.entries(option.values)){assert.ok(key in defaults,key);assert.equal(s[key],value,`${preset.id}.${key}`);}}assert.ok(matchPreset(preset,defaults)>=0,preset.id);}});
+import {questions} from '../dist/wizard.js';
+test('every wizard answer sets real fields within their ranges',()=>{for(const q of questions){const keys=[...(q.options||[]).flatMap(o=>Object.entries(o.values)),...(q.field?[[q.field.key,defaults[q.field.key]]]:[]),...(q.fields||[]).map(f=>[f.key,defaults[f.key]])];for(const [key,value] of keys){assert.ok(key in defaults,`${q.id}.${key}`);assert.equal(sanitize({...defaults,[key]:value})[key],value,`${q.id}.${key}`);}for(const c of q.chips||[])assert.equal(sanitize({...defaults,[q.field.key]:c.value})[q.field.key],c.value,`${q.id} chip`);}});
+test('disease answer means one pepper crop every four years',()=>{const q=questions.find(q=>q.id==='disease');const r=calculate({...defaults,...q.options[0].values});assert.equal(r.cyclesPerYear,.25);});

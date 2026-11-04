@@ -1,4 +1,5 @@
 import {groups,fields,defaults,presets,matchPreset,sanitize,calculate,scenario} from './model.js';
+import {openWizard} from './wizard.js';
 
 const $=selector=>document.querySelector(selector);
 const format=(n,digits=0)=>new Intl.NumberFormat('ko-KR',{maximumFractionDigits:digits,minimumFractionDigits:digits}).format(n);
@@ -6,14 +7,15 @@ const won=n=>`${format(n)}원`;
 const years=n=>n===null?'회수 불가':`${format(n,2)}년`;
 const STORAGE_KEY='farm-insight-v2';
 let state={...defaults},horizon=10,spread=20,view='dashboard',saveTimer,toastTimer,storageAvailable=true;
-try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(saved&&typeof saved==='object')state=sanitize(saved);}catch{storageAvailable=false;}
+const ANSWERS_KEY='farm-insight-v2-answers';let answers={},firstVisit=true;
+try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(saved&&typeof saved==='object'){state=sanitize(saved);firstVisit=false;}answers=JSON.parse(localStorage.getItem(ANSWERS_KEY)||'{}')||{};}catch{storageAvailable=false;}
 
 function fieldHTML(field){
   const [key,label,,min,max,step,unit,minLabel,maxLabel,hint]=field;
   const value=key==='scenarioSpread'?spread:state[key];
   return `<div class="slider-field"><div class="slider-heading"><label for="${key}-number">${label}</label><div class="number-wrap"><input id="${key}-number" data-key="${key}" type="number" inputmode="decimal" min="${min}" max="${max}" step="${step}" value="${value}" class="${max>=100000?'wide':''}" ${hint?`aria-describedby="${key}-hint"`:''}><span class="input-unit">${unit}</span></div></div><input class="range" id="${key}-range" data-key="${key}" type="range" min="${min}" max="${max}" step="${step}" value="${value}" aria-label="${label} 슬라이더" aria-valuetext="${format(value,step<1?2:0)} ${unit}" style="--fill:${(value-min)/(max-min)*100}%"><div class="range-limits"><span>${minLabel}</span><span>${maxLabel}</span></div>${hint?`<p class="field-hint" id="${key}-hint">${hint}</p>`:''}</div>`;
 }
-$('#controls-body').innerHTML=`<section class="preset-panel" aria-labelledby="preset-title"><h3 id="preset-title">조사 자료로 빠르게 채우기</h3><p>자료조사팀 보고서(2026.10)의 값을 골라 아래 입력값에 한 번에 넣어요.</p>${presets.map(preset=>`<div class="preset-field"><label for="preset-${preset.id}">${preset.label}</label><select id="preset-${preset.id}" data-preset="${preset.id}"><option value="-1">직접 입력</option>${preset.options.map((option,i)=>`<option value="${i}">${option.label}</option>`).join('')}</select><small id="preset-${preset.id}-note"></small></div>`).join('')}</section>`+groups.map((group,i)=>`<details class="control-section" ${group.open?'open':''}><summary><span class="section-number">0${i+1}</span>${group.title}</summary><div class="section-controls">${group.fields.map(fieldHTML).join('')}</div></details>`).join('');
+$('#controls-body').innerHTML=`<div class="wizard-entry"><div><strong>질문에 답해서 설정하기</strong><span>품종·스마트팜·거름을 고르면 나머지 값이 정해져요.</span></div><button class="wz-open" id="wizard-open">다시 답하기</button></div><details class="preset-panel"><summary id="preset-title">조사 자료 값 바로 바꾸기</summary><p>자료조사팀 보고서(2026.10)의 값을 골라 아래 입력값에 한 번에 넣어요.</p>${presets.map(preset=>`<div class="preset-field"><label for="preset-${preset.id}">${preset.label}</label><select id="preset-${preset.id}" data-preset="${preset.id}"><option value="-1">직접 입력</option>${preset.options.map((option,i)=>`<option value="${i}">${option.label}</option>`).join('')}</select><small id="preset-${preset.id}-note"></small></div>`).join('')}</details>`+groups.map((group,i)=>`<details class="control-section" ${group.open?'open':''}><summary><span class="section-number">0${i+1}</span>${group.title}</summary><div class="section-controls">${group.fields.map(fieldHTML).join('')}</div></details>`).join('');
 $('#scenario-slider').innerHTML=fieldHTML(['scenarioSpread','가격·생산량 각각의 변동 폭',20,5,40,5,'%','±5%','±40%']);
 
 function compact(n){
@@ -61,7 +63,7 @@ function renderChart(r){
   $('#chart-footer').innerHTML=`<span>목표 ${format(state.targetYears,1)}년 후 <strong>${targetBalance>=0?'회수 후 잔여':'미회수 투자금'} ${format(Math.abs(targetBalance)/10000)}만원</strong></span><span>${horizon}년 후 누적 ${format((r.annualProfit*horizon-r.investment)/10000)}만원</span>`;
 }
 function renderCosts(r){
-  const entries=[['labor','인건비','#55764a'],['electricity','전기요금','#8ea66a'],['drying','건조 전기료','#a7b97e'],['seed','종자','#bbc998'],['fertilizer','비료·퇴비','#d3ddbb'],['pesticide','농약','#e0d6bb'],['other','기타','#e7e9e0']];
+  const entries=[['labor','인건비','#55764a'],['electricity','전기요금','#8ea66a'],['drying','건조 전기료','#a7b97e'],['seed','종자','#bbc998'],['fertilizer','비료','#d3ddbb'],['compost','퇴비','#c9b98f'],['pesticide','농약','#e0d6bb'],['other','기타','#e7e9e0']];
   let percent=0;const segments=entries.map(([key,,color])=>{const begin=percent;percent+=r.totalCost>0?r.costs[key]/r.totalCost*100:0;return `${color} ${begin}% ${percent}%`;});
   const background=r.totalCost>0?`conic-gradient(${segments.join(',')})`:'#edf1e7';
   $('#cost-breakdown').innerHTML=`<div class="cost-content"><div class="donut" style="background:${background}" role="img" aria-label="총 운영비 ${won(r.totalCost)}"><div class="donut-center"><small>총 운영비</small><strong>${format(r.totalCost/10000)}</strong><span>만원</span></div></div><div class="cost-legend">${entries.map(([key,label,color])=>`<div class="cost-row"><i class="cost-dot" style="background:${color}"></i><span>${label}</span><strong>${format(r.costs[key]/10000,1)}만원</strong></div>`).join('')}</div></div><div class="cycle-stats"><div><span>재배 1회 매출</span><strong>${format(r.revenue/10000)}만원</strong></div><div><span>재배 1회 운영이익</span><strong>${format(r.profit/10000)}만원</strong></div></div>`;
@@ -103,7 +105,7 @@ function toast(message){clearTimeout(toastTimer);$('#toast').textContent=message
 $('#reset-button').addEventListener('click',()=>{state={...defaults};for(const field of fields)syncControl(field[0],state[field[0]]);spread=20;syncControl('scenarioSpread',20);render();save();toast('모든 변수를 기본값으로 되돌렸어요.');});
 $('#export-button').addEventListener('click',()=>{
   const r=calculate(state);
-  const rows=[['팜인사이트 · 고추 스마트팜 경제성 분석'],['안내','입력 조건에 따른 단순 추정치이며 실제 수익을 보장하지 않습니다.'],['생성 일시',new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})],[],['입력 항목','값','단위'],...fields.map(([key,label,,,,,unit])=>[label,state[key],unit]),[],['결과','값','단위'],['초기 투자금',r.investment,'원'],['필요 종자 수',r.seedCount,'립'],['구매 종자 봉수',r.seedPacks,'봉'],['재배 1회 생산량(건고추)',r.totalYield,'kg'],['생고추 환산량',Math.round(r.freshYield),'kg'],['건조 횟수',r.dryingBatches,'회'],...Object.entries(r.costs).map(([key,value])=>[({labor:'인건비',electricity:'전기요금',drying:'건조 전기료',seed:'종자',fertilizer:'비료·퇴비',pesticide:'농약',other:'기타'})[key],Math.round(value),'원']),['재배 1회 운영비',Math.round(r.totalCost),'원'],['재배 1회 매출',r.revenue,'원'],['재배 1회 운영이익',Math.round(r.profit),'원'],['연간 재배 횟수',r.cyclesPerYear,'회'],['연간 운영이익',Math.round(r.annualProfit),'원'],['예상 투자금 회수 기간',r.payback??'회수 불가','년'],['목표 기간 충족',r.met?'충족':'미충족',''],['운영 손익분기 단가',r.breakeven===null?'생산량 없음':Math.ceil(r.breakeven),'원/kg'],['목표 회수 필요 단가',r.targetPrice===null?'생산량 없음':Math.ceil(r.targetPrice),'원/kg'],[],['시나리오','가격·생산량 각각 변동','연간 운영이익(원)','회수 기간(년)'],...[-spread,0,spread].map((p,i)=>{const s=scenario(state,1+p/100,1+p/100);return [['보수적','기준','낙관적'][i],`${p}%`,Math.round(s.annualProfit),s.payback??'회수 불가'];}),[],['모형 가정','재배마다 같은 수익 유지, 휴지기 운영비 없음, 연간 균등 현금흐름'],['미반영 항목','대출이자·세금·감가상각·시설 교체비·토지비·보조금·물가 변화']];
+  const rows=[['팜인사이트 · 고추 스마트팜 경제성 분석'],['안내','입력 조건에 따른 단순 추정치이며 실제 수익을 보장하지 않습니다.'],['생성 일시',new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})],[],['입력 항목','값','단위'],...fields.map(([key,label,,,,,unit])=>[label,state[key],unit]),[],['결과','값','단위'],['초기 투자금',r.investment,'원'],['필요 종자 수',r.seedCount,'립'],['구매 종자 봉수',r.seedPacks,'봉'],['재배 1회 생산량(건고추)',r.totalYield,'kg'],['생고추 환산량',Math.round(r.freshYield),'kg'],['건조 횟수',r.dryingBatches,'회'],...Object.entries(r.costs).map(([key,value])=>[({labor:'인건비',electricity:'전기요금',drying:'건조 전기료',seed:'종자',fertilizer:'비료',compost:'퇴비',pesticide:'농약',other:'기타'})[key],Math.round(value),'원']),['재배 1회 운영비',Math.round(r.totalCost),'원'],['재배 1회 매출',r.revenue,'원'],['재배 1회 운영이익',Math.round(r.profit),'원'],['연간 재배 횟수',r.cyclesPerYear,'회'],['연간 운영이익',Math.round(r.annualProfit),'원'],['예상 투자금 회수 기간',r.payback??'회수 불가','년'],['목표 기간 충족',r.met?'충족':'미충족',''],['운영 손익분기 단가',r.breakeven===null?'생산량 없음':Math.ceil(r.breakeven),'원/kg'],['목표 회수 필요 단가',r.targetPrice===null?'생산량 없음':Math.ceil(r.targetPrice),'원/kg'],[],['시나리오','가격·생산량 각각 변동','연간 운영이익(원)','회수 기간(년)'],...[-spread,0,spread].map((p,i)=>{const s=scenario(state,1+p/100,1+p/100);return [['보수적','기준','낙관적'][i],`${p}%`,Math.round(s.annualProfit),s.payback??'회수 불가'];}),[],['모형 가정','재배마다 같은 수익 유지, 휴지기 운영비 없음, 연간 균등 현금흐름'],['미반영 항목','대출이자·세금·감가상각·시설 교체비·토지비·보조금·물가 변화']];
   const csv='\uFEFF'+rows.map(row=>row.map(value=>`"${String(value).replaceAll('"','""')}"`).join(',')).join('\r\n');
   const filename='팜인사이트_경제성분석.csv';
   // claude.ai 아티팩트에서는 직접 다운로드가 막혀 있어 downloads 기능으로 저장한다. 일반 웹서버에서는 기존 방식 사용.
@@ -113,5 +115,10 @@ $('#export-button').addEventListener('click',()=>{
     const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const link=document.createElement('a');link.href=url;link.download=filename;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('분석 결과와 입력값을 CSV로 내보냈어요.');
   })();
 });
+function startWizard(){openWizard($('#wizard'),{values:{...state},answers,preview:calculate,
+  onFinish:(values,picked)=>{state=sanitize(values);answers=picked;for(const field of fields)syncControl(field[0],state[field[0]]);render();save();try{localStorage.setItem(ANSWERS_KEY,JSON.stringify(answers));}catch{}setView('dashboard');toast('답한 내용으로 분석을 채웠어요.');},
+  onSkip:()=>{if(firstVisit){save();firstVisit=false;}$('#wizard-open').focus();}});}
+$('#wizard-open').addEventListener('click',startWizard);
+if(firstVisit)startWizard();
 if(!storageAvailable)$('#save-status').textContent='현재 브라우저에서는 자동 저장이 제한돼요';
 render();
