@@ -122,3 +122,18 @@ $('#wizard-open').addEventListener('click',startWizard);
 if(firstVisit)startWizard();
 if(!storageAvailable)$('#save-status').textContent='현재 브라우저에서는 자동 저장이 제한돼요';
 render();
+
+// 홈 화면 설치(PWA). 서비스 워커가 등록되는 곳(GitHub Pages 등)에서만 설치 버튼을 보여 준다.
+const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+let installPrompt=null;
+window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();installPrompt=event;if(!standalone)$('#install-button').hidden=false;});
+window.addEventListener('appinstalled',()=>{$('#install-button').hidden=true;toast('홈 화면에 팜인사이트를 추가했어요.');});
+if('serviceWorker' in navigator&&location.protocol==='https:'){
+  navigator.serviceWorker.register('./sw.js').then(()=>{if(isIOS&&!standalone)$('#install-button').hidden=false;}).catch(()=>{});
+}
+$('#install-button').addEventListener('click',async()=>{
+  if(installPrompt){installPrompt.prompt();const choice=await installPrompt.userChoice.catch(()=>null);if(choice?.outcome==='accepted')$('#install-button').hidden=true;installPrompt=null;return;}
+  $('#install-hint').hidden=false;$('#install-hint-close').focus();
+});
+$('#install-hint-close').addEventListener('click',()=>{$('#install-hint').hidden=true;$('#install-button').focus();});

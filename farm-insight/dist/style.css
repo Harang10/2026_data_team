@@ -98,3 +98,9 @@ body.wizard-open{overflow:hidden}
 .wz button:focus-visible{outline:2px solid var(--green);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){.wz-progress i,.wz-option,.wz-oxbtn{transition:none}}
 @media (max-width:680px){.wizard-entry{margin:0 16px 10px}}
+.export-button.install-button{margin-left:8px}
+.install-hint{position:fixed;left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:120;max-width:420px;margin:0 auto;background:var(--card);border-radius:18px;box-shadow:0 12px 40px rgba(39,77,57,.22);padding:20px;display:grid;gap:10px}
+.install-hint strong{font-size:16px;color:var(--ink)}
+.install-hint p{font-size:14px;line-height:1.6;color:var(--muted)}
+.install-hint b{color:var(--ink)}
+[hidden]{display:none!important}

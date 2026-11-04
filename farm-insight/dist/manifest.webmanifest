@@ -1,0 +1,15 @@
+{
+  "name": "팜인사이트 · 고추 스마트팜 경제성 분석",
+  "short_name": "팜인사이트",
+  "description": "고추 스마트팜의 투자비, 운영비, 수익과 회수 기간을 질문에 답하며 계산하는 앱",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f6f2",
+  "theme_color": "#f5f6f2",
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+  ]
+}

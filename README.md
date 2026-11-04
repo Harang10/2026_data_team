@@ -25,7 +25,7 @@ python smartfarm_economics.py
 
 ## 웹앱
 
-`farm-insight/` 폴더에 슬라이더 기반 스마트팜 경제성 분석 웹앱이 들어 있습니다. [배포된 웹앱](https://farm-insight-pepper-1023.violet-duck-2840.chatgpt.site)에서 바로 사용할 수 있습니다.
+`farm-insight/` 폴더에 슬라이더 기반 스마트팜 경제성 분석 웹앱이 들어 있습니다. GitHub Pages 주소 https://harang10.github.io/2026_data_team/ 에서 바로 쓰고, 휴대폰 홈 화면에 앱처럼 설치할 수 있습니다(main에 푸시하면 자동 배포). [배포된 웹앱](https://farm-insight-pepper-1023.violet-duck-2840.chatgpt.site)에서 바로 사용할 수 있습니다.
 
 ```bash
 cd farm-insight
