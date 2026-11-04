@@ -28,3 +28,7 @@ test('every preset references real fields within range and defaults match a pres
 import {questions} from '../dist/wizard.js';
 test('every wizard answer sets real fields within their ranges',()=>{for(const q of questions){const keys=[...(q.options||[]).flatMap(o=>Object.entries(o.values)),...(q.field?[[q.field.key,defaults[q.field.key]]]:[]),...(q.fields||[]).map(f=>[f.key,defaults[f.key]])];for(const [key,value] of keys){assert.ok(key in defaults,`${q.id}.${key}`);assert.equal(sanitize({...defaults,[key]:value})[key],value,`${q.id}.${key}`);}for(const c of q.chips||[])assert.equal(sanitize({...defaults,[q.field.key]:c.value})[q.field.key],c.value,`${q.id} chip`);}});
 test('disease answer means one pepper crop every four years',()=>{const q=questions.find(q=>q.id==='disease');const r=calculate({...defaults,...q.options[0].values});assert.equal(r.cyclesPerYear,.25);});
+test('seedlings replace seed packs and land rent is charged once a year',()=>{const r=calculate({...defaults,seedlingPrice:140});assert.equal(r.costs.seed,2778*140);
+  const base=calculate(defaults),rent=calculate({...defaults,landRent:1000000});close(rent.annualProfit,base.annualProfit-1000000);
+  const rot=calculate({...defaults,landRent:1000000,fallowMonths:42});close(rot.annualProfit,calculate({...defaults,fallowMonths:42}).annualProfit-1000000);
+  const legacyRent=calculate({...legacy,landRent:2000000}),target=calculate({...legacy,landRent:2000000,salePrice:legacyRent.targetPrice});close(target.payback,legacy.targetYears,1e-9);});

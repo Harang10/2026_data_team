@@ -35,6 +35,7 @@ export const groups = [
     ['seedPackPrice','종자 1봉 가격',120000,0,500000,1000,'원','0원','50만원'],
     ['seedPackSize','1봉 종자 수',1200,1,10000,1,'립','1립','10,000립','종자는 봉 단위로 구매해 필요 봉수를 올림합니다.'],
     ['germination','종자 발아율',95,10,100,1,'%','10%','100%','기본 95%(소은희 외 2014 저장 시험 근거). 법정 최저 기준은 65%입니다.'],
+    ['seedlingPrice','모종 1주 가격',0,0,3000,10,'원','0원','3,000원','모종을 사서 심으면 입력하세요. 0원이면 씨앗부터 키우는 것으로 계산합니다.'],
   ]},
   {title:'비료 · 퇴비',fields:[
     ['baseBags','1,000㎡당 밑거름',4.5,0,50,.1,'포','0포','50포','뿌리조은(12-7-9) 20kg 기준 90kg = 4.5포'],
@@ -51,7 +52,8 @@ export const groups = [
   ]},
   {title:'휴지 기간 · 기타 비용',fields:[
     ['fallowMonths','재배 사이 휴지 기간',6,0,48,.5,'개월','0개월','48개월','재배 6개월 + 휴지 6개월 = 연 1작. 풋마름병 발생 밭은 3~4년 돌려짓기가 권장됩니다.'],
-    ['otherCost','재배 1회 기타 비용',0,0,50000000,100000,'원','0원','5,000만원','수도·포장·운송·임차료 등 별도 지출을 더하세요.'],
+    ['otherCost','재배 1회 기타 비용',0,0,50000000,100000,'원','0원','5,000만원','수도·포장·운송 등 별도 지출을 더하세요.'],
+    ['landRent','연간 토지 임차료',0,0,50000000,100000,'원','0원','5,000만원','빌린 땅이면 1년에 내는 전체 금액. 재배 횟수와 상관없이 매년 나갑니다.'],
   ]},
 ];
 export const fields = groups.flatMap(group=>group.fields);
@@ -104,7 +106,7 @@ export function calculate(input) {
   const plantCount=Math.ceil(s.area/s.areaPerPlant);
   const seedCount=Math.ceil(plantCount/(s.germination/100));
   const seedPacks=Math.ceil(seedCount/s.seedPackSize);
-  const seed=seedPacks*s.seedPackPrice;
+  const seed=s.seedlingPrice>0?plantCount*s.seedlingPrice:seedPacks*s.seedPackPrice;
   const labor=s.dailyHours*s.workdays*s.hourlyWage*s.months;
   const rateFactor=1+s.electricitySurcharge/100;
   const electricity=(s.contractKw*s.baseRate+s.monthlyKwh*s.energyRate)*rateFactor*s.months;
@@ -116,11 +118,13 @@ export function calculate(input) {
   const fertilizer=Math.ceil(s.baseBags*s.area/1000)*s.basePrice+Math.ceil(s.topBags*s.area/1000)*s.topPrice;
   const compost=Math.ceil(s.compostBags*s.area/1000)*s.compostPrice;
   const pesticide=Math.ceil(s.pesticideUnits*s.area/1000)*s.sprayCount*s.pesticidePrice;
-  const costs={labor,electricity,drying,seed,fertilizer,compost,pesticide,other:s.otherCost};
+  const cyclesPerYear=12/(s.months+s.fallowMonths);
+  // 임차료는 연 단위로 나가므로 재배 1회 비용에는 연간 임차료 ÷ 연간 재배 횟수로 나눠 넣는다.
+  const land=s.landRent/cyclesPerYear;
+  const costs={labor,electricity,drying,seed,fertilizer,compost,pesticide,land,other:s.otherCost};
   const totalCost=Object.values(costs).reduce((a,b)=>a+b,0);
   const revenue=totalYield*s.salePrice;
   const profit=revenue-totalCost;
-  const cyclesPerYear=12/(s.months+s.fallowMonths);
   const annualProfit=profit*cyclesPerYear;
   const payback=investment===0?0:annualProfit>0?investment/annualProfit:null;
   const met=annualProfit>0&&payback!==null&&payback<=s.targetYears;
